@@ -16,6 +16,7 @@ TYPE = "type"
 WIDTH = "width"
 HEIGHT = "height"
 GRID = "grid"
+FLOAT = "float"
 LAYOUT = "layout"
 LOGIC = "logic"
 ROWS = "rows"
@@ -36,6 +37,8 @@ LABEL = "label"
 TEXT_ANCHOR = "text-anchor"
 MIDDLE = "middle"
 TEXT_TOP_MARGIN = "text-top-margin"
+REVERSE = "reverse"
+DRIFT = "drift"
 
 def inherit_properties(parent, child):
     if (parent is None) or (child is None):
@@ -57,6 +60,13 @@ def layout_component(c):
 
     if c[LAYOUTED]:
         return c
+
+    known_algorithms = [GRID, # Set the inner component on a grid, as square as possible by default
+                        FLOAT, # Set the inner components on a grid, then match components containing the same inner components
+                        REVERSE, # Sets the position of the component depending on the constrains of the inner components
+                        DRIFT, # Used on a second pass to move prevent components from overlapping
+                        ]
+
 
     if LAYOUT not in c:
         c[LAYOUT] = {LOGIC:GRID}
