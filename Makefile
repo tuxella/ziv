@@ -1,6 +1,8 @@
 
 .PHONY: default all clean flush re archives delivery %.pdf
 
+.SECONDARY: graph.svg
+
 .SUFFIXES: .dot .neato .png .gif
 
 default: all
