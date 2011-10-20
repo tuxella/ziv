@@ -31,11 +31,11 @@ Y = "y"
 RECTANGLE = "rect"
 SHAPE = "shape"
 LAYOUTED = "layouted"
-
-inherited_properties = ["node",
-                        "component",
-                        "layout"]
-
+TRACED = "traced"
+LABEL = "label"
+TEXT_ANCHOR = "text-anchor"
+MIDDLE = "middle"
+TEXT_TOP_MARGIN = "text-top-margin"
 
 def inherit_properties(parent, child):
     if (parent is None) or (child is None):
@@ -102,20 +102,24 @@ def layout_component(c):
             for n in row:
                 if n[HEIGHT] > max_height:
                     max_height = n[HEIGHT]
-                n[Y] = y_offset
+            for n in row:
+                n[Y] = y_offset + max_height / 2 - n[HEIGHT] / 2
             y_offset = y_offset + max_height + c[INNER_MARGIN]
+
 
         for column in columns_nodes:
             max_width = 0
             for n in column:
                 if n[WIDTH] > max_width:
                     max_width = n[WIDTH]
-                n[X] = x_offset
+#                n[X] = x_offset
+            for n in column:
+                n[X] = x_offset + max_width / 2 - n[WIDTH] / 2
             x_offset = x_offset + max_width + c[INNER_MARGIN]
 
 
-        c[WIDTH] = x_offset + c[INNER_MARGIN]
-        c[HEIGHT] = y_offset + c[INNER_MARGIN]
+        c[WIDTH] = x_offset
+        c[HEIGHT] = y_offset
 
         c[LAYOUTED] = True
 
@@ -135,16 +139,18 @@ def set_default_component(c):
     default_properties = {
         CHILDREN:[],
         LAYOUTED:False,
+        TRACED:False,
         INNER_MARGIN: 5,
         X: 0,
         Y: 0,
         WIDTH: 50,
         HEIGHT: 50,
         STROKE: "#8fc8ff",
-        STROKE_WIDTH:3,
+        STROKE_WIDTH:1.5,
         RX:10,
         SHAPE:RECTANGLE,
-        FILLCOLOR: "#DDDDDD"}
+        FILLCOLOR: "#DDDDDD",
+        TEXT_TOP_MARGIN:5}
 
     for p, v in default_properties.items():
         if p not in c:
@@ -166,14 +172,45 @@ def augment_items(components, links):
     for l in links:
         l[TYPE] = LINK
 
+def center_x(item, reference):
+    new_x = reference[X] + reference[WIDTH] / 2
+    new_x = new_x - item[WIDTH] / 2
+
+    return new_x
+
+def center_y(item, reference):
+    new_y = reference[Y] + reference[HEIGHT] / 2
+    new_y = new_y - item[HEIGHT] / 2
+
+    return new_y
+
 def trace_component(c, svg, parent, depth = 0):
+    if (TRACED in c) and c[TRACED]:
+        return
+
     print "%sTracing : %s" % (" " * depth, c[ID])
+    c[TRACED] = True
     layout_component(c)
     if parent is not None:
         c[X] = c[X] + parent[X] if X in parent else 0
         c[Y] = c[Y] + parent[Y] if Y in parent else 0
 
-    svg.addChildElement(c[SHAPE], c)
+    c_item = svg.addChildElement(c[SHAPE], c)
+    if LABEL in c:
+        text_item = svg.addChildElement('text',
+                                        {X: c[X] + c[WIDTH] / 2,
+                                         Y: c[Y] + c[TEXT_TOP_MARGIN] / 2,
+                                         TEXT_ANCHOR: MIDDLE},
+                                        c[LABEL])
+
+#        text_item[X] = center_x(text_item, c_item)
+#        text_item[Y] = center_y(text_item, c_item)
+
+        print "Type of : %s", str(type(text_item))
+
+#        for k in text_item:
+#            print "K : ", k
+
     for n in c[CHILDREN]:
         trace_component(n, svg, c, depth + 1)
 
@@ -208,3 +245,4 @@ def main():
 
 if "__main__" == __name__:
     sys.exit(main())
+
